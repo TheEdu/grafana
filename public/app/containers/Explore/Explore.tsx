@@ -4,7 +4,6 @@ import colors from 'app/core/utils/colors';
 import TimeSeries from 'app/core/time_series2';
 
 import ElapsedTime from './ElapsedTime';
-import Legend from './Legend';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
@@ -16,9 +15,7 @@ import { decodePathComponent } from 'app/core/utils/location_util';
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
-    const responseAlias = seriesData.target;
-    const query = options.targets[index].expr;
-    const alias = responseAlias && responseAlias !== '{}' ? responseAlias : query;
+    const alias = seriesData.target;
     const colorIndex = index % colors.length;
     const color = colors[colorIndex];
 
@@ -221,55 +218,62 @@ export class Explore extends React.Component<any, IExploreState> {
       tableResult,
     } = this.state;
     const showingBoth = showingGraph && showingTable;
-    const graphHeight = showingBoth ? '200px' : null;
-    const graphButtonClassName = showingBoth || showingGraph ? 'btn m-r-1' : 'btn btn-inverse m-r-1';
-    const tableButtonClassName = showingBoth || showingTable ? 'btn m-r-1' : 'btn btn-inverse m-r-1';
+    const graphHeight = showingBoth ? '200px' : '400px';
+    const graphButtonActive = showingBoth || showingGraph ? 'active' : '';
+    const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     return (
       <div className="explore">
-        <div className="page-body page-full">
-          <h2 className="page-sub-heading">Explore</h2>
-          {datasourceLoading ? <div>Loading datasource...</div> : null}
-
-          {datasourceError ? <div title={datasourceError}>Error connecting to datasource.</div> : null}
-
-          {datasource ? (
-            <div className="m-r-3">
-              <div className="nav m-b-1 navbar">
-                <div className="navbar-buttons">
-                  <button className={graphButtonClassName} onClick={this.handleClickGraphButton}>
-                    Graph
-                  </button>
-                  <button className={tableButtonClassName} onClick={this.handleClickTableButton}>
-                    Table
-                  </button>
-                </div>
-                <div className="navbar__spacer" />
-                <TimePicker range={range} onChangeTime={this.handleChangeTime} />
-                <div className="navbar-buttons">
-                  <button type="submit" className="btn btn-primary" onClick={this.handleSubmit}>
-                    <i className="fa fa-return" /> Run Query
-                  </button>
-                </div>
-                {loading || latency ? <ElapsedTime time={latency} className="" /> : null}
-              </div>
-              <QueryRows
-                queries={queries}
-                request={this.request}
-                onAddQueryRow={this.handleAddQueryRow}
-                onChangeQuery={this.handleChangeQuery}
-                onExecuteQuery={this.handleSubmit}
-                onRemoveQueryRow={this.handleRemoveQueryRow}
-              />
-              <main className="m-t-2">
-                {showingGraph ? (
-                  <Graph data={graphResult} id="explore-1" options={requestOptions} height={graphHeight} />
-                ) : null}
-                {showingGraph ? <Legend data={graphResult} /> : null}
-                {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
-              </main>
-            </div>
-          ) : null}
+        <div className="navbar">
+          <div>
+            <a className="navbar-page-btn">
+              <i className="fa fa-rocket" />
+              Explore
+            </a>
+          </div>
+          <div className="navbar__spacer" />
+          <div className="navbar-buttons">
+            <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
+              Graph
+            </button>
+            <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
+              Table
+            </button>
+          </div>
+          <TimePicker range={range} onChangeTime={this.handleChangeTime} />
+          <div className="navbar-buttons relative">
+            <button className="btn navbar-button--primary" onClick={this.handleSubmit}>
+              Run Query <i className="fa fa-level-down run-icon" />
+            </button>
+            {loading || latency ? <ElapsedTime time={latency} className="text-info" /> : null}
+          </div>
         </div>
+
+        {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
+
+        {datasourceError ? (
+          <div className="explore-container" title={datasourceError}>
+            Error connecting to datasource.
+          </div>
+        ) : null}
+
+        {datasource ? (
+          <div className="explore-container">
+            <QueryRows
+              queries={queries}
+              request={this.request}
+              onAddQueryRow={this.handleAddQueryRow}
+              onChangeQuery={this.handleChangeQuery}
+              onExecuteQuery={this.handleSubmit}
+              onRemoveQueryRow={this.handleRemoveQueryRow}
+            />
+            <main className="m-t-2">
+              {showingGraph ? (
+                <Graph data={graphResult} id="explore-1" options={requestOptions} height={graphHeight} />
+              ) : null}
+              {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+            </main>
+          </div>
+        ) : null}
       </div>
     );
   }
